@@ -152,6 +152,11 @@ if(UNIX)
   set(DEPENDENCIES "${DEPENDENCIES} -lz")
 endif(UNIX)
 
+set(PLATFORM_OBJECTS)
+if(ANDROID)
+  list(APPEND PLATFORM_OBJECTS $<TARGET_OBJECTS:Android>)
+endif()
+
 add_library(roblox SHARED
   $<TARGET_OBJECTS:boost>
   $<TARGET_OBJECTS:Base>
@@ -164,11 +169,8 @@ add_library(roblox SHARED
   $<TARGET_OBJECTS:GfxBase>
   $<TARGET_OBJECTS:GfxCore>
   $<TARGET_OBJECTS:GfxRender>
-  $<TARGET_OBJECTS:App.BulletPhysics>)
-
-if(ANDROID)
-  target_sources(roblox PRIVATE $<TARGET_OBJECTS:Android>)
-endif()
+  $<TARGET_OBJECTS:App.BulletPhysics>
+  ${PLATFORM_OBJECTS})
 set_target_properties(roblox PROPERTIES LINKER_LANGUAGE CXX)
 
 # Setup linker flag.
