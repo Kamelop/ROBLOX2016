@@ -101,6 +101,10 @@ if(CMAKE_SYSTEM_NAME STREQUAL "iOS" OR IOS)
   set(APPLE_IOS ON)
 endif()
 
+if(APPLE_IOS)
+  add_definitions(-DRBX_PLATFORM_IOS)
+endif()
+
 include_project_files(SystemHeaders "${CMAKE_SYSROOT}/usr/include/*.h;${RBX_STL_INCLUDE_DIRS}")
 
 # Add some subdirectories that should have CMakeLists.txt in them.
