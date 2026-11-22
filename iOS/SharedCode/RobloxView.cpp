@@ -311,8 +311,8 @@ static RBX::ViewBase* createGameWindow(RobloxView* view, void *wnd, unsigned int
 
 RobloxView::RobloxView(void* wnd, unsigned int width, unsigned int height, bool buildInGameGui)
 :view(createGameWindow(this, wnd, width, height))
+    , marshaller(RBX::FunctionMarshaller::GetWindow())
     , buildInGameGui(buildInGameGui)
-    ,marshaller(RBX::FunctionMarshaller::GetWindow())
 {
 }
 
