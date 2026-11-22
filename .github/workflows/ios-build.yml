@@ -1,4 +1,4 @@
-name: iOS Studio Build
+name: iOS Studio Device Build
 
 on:
   push:
@@ -13,12 +13,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: ios-studio-build-${{ github.ref }}
+  group: ios-studio-device-build-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-studio:
-    name: Build Roblox Studio for iOS Simulator
+  build-ios-engine:
+    name: Build iOS engine foundation (device arm64)
     runs-on: xcode-27
     timeout-minutes: 120
 
@@ -36,26 +36,31 @@ jobs:
       - name: List project schemes
         run: xcodebuild -list -project iOS/RobloxMobile.xcodeproj
 
-      - name: Build Studio scheme
+      # App Studio is a desktop/macOS library scheme. App iOS is the
+      # iOS-specific engine scheme; build it for physical-device arm64.
+      - name: Build iOS engine for iPad and iPhone
         run: |
           set -o pipefail
+          mkdir -p build
           xcodebuild \
             -project iOS/RobloxMobile.xcodeproj \
-            -scheme "App Studio" \
-            -sdk iphonesimulator \
-            -destination 'generic/platform=iOS Simulator' \
+            -scheme "App iOS" \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
             -configuration Debug \
             -derivedDataPath build/DerivedData \
+            ARCHS=arm64 \
+            ONLY_ACTIVE_ARCH=NO \
             CODE_SIGNING_ALLOWED=NO \
-            build 2>&1 | tee build/ios-studio-build.log
+            build 2>&1 | tee build/ios-device-build.log
 
-      - name: Upload simulator app and build log
+      - name: Upload device engine build and log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: roblox-studio-ios-simulator
+          name: roblox-ios-engine-arm64-foundation
           path: |
-            build/DerivedData/Build/Products/Debug-iphonesimulator/*.app
-            build/ios-studio-build.log
+            build/DerivedData/Build/Products/Debug-iphoneos/*.a
+            build/ios-device-build.log
           if-no-files-found: warn
           retention-days: 14
