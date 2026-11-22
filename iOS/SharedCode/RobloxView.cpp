@@ -309,8 +309,9 @@ static RBX::ViewBase* createGameWindow(RobloxView* view, void *wnd, unsigned int
 	return rbxView;
 }
 
-RobloxView::RobloxView(void* wnd, unsigned int width, unsigned int height)
+RobloxView::RobloxView(void* wnd, unsigned int width, unsigned int height, bool buildInGameGui)
 :view(createGameWindow(this, wnd, width, height))
+    , buildInGameGui(buildInGameGui)
     ,marshaller(RBX::FunctionMarshaller::GetWindow())
 {
 }
@@ -336,7 +337,7 @@ void RobloxView::completeViewPrep(shared_ptr<RBX::Game> game)
         }
     }
     
-    bindWorkspace(view, game->getDataModel());
+    bindWorkspace(view, game->getDataModel(), buildInGameGui);
     
     // complete render jobs setup
     renderJob = shared_ptr<RenderJob>(new RenderJob(view.get(), marshaller, game->getDataModel()));
@@ -436,11 +437,11 @@ RobloxView::~RobloxView(void)
 	view.reset();
 }
 
-void RobloxView::bindWorkspace(boost::shared_ptr<RBX::ViewBase> view, boost::shared_ptr<RBX::DataModel> const dataModel)
+void RobloxView::bindWorkspace(boost::shared_ptr<RBX::ViewBase> view, boost::shared_ptr<RBX::DataModel> const dataModel, bool buildInGameGui)
 {
     DataModel::LegacyLock lock(dataModel, RBX::DataModelJob::Write);
     view->bindWorkspace(dataModel);
-    view->buildGui();
+    view->buildGui(buildInGameGui);
 }
 
 void RobloxView::setBounds(unsigned int width, unsigned int height)
@@ -450,9 +451,9 @@ void RobloxView::setBounds(unsigned int width, unsigned int height)
 		view->onResize(width, height);
 }
 
-RobloxView *RobloxView::create_view(shared_ptr<RBX::Game> game, void* wnd, unsigned int width, unsigned int height)
+RobloxView *RobloxView::create_view(shared_ptr<RBX::Game> game, void* wnd, unsigned int width, unsigned int height, bool buildInGameGui)
 {
-    RobloxView* result = new RobloxView(wnd, width,height);
+    RobloxView* result = new RobloxView(wnd, width, height, buildInGameGui);
     result->completeViewPrep(game);
     return result;
 }
