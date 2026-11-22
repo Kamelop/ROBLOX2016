@@ -2,6 +2,12 @@ cmake_minimum_required(VERSION 2.8)
 
 project(roblox C CXX ASM)
 
+# Objective-C++ is required by the iOS EAGL view/context implementation.
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+  enable_language(OBJCXX)
+  set(APPLE_IOS ON)
+endif()
+
 if(NOT UNIX)
   message(FATAL_ERROR "Unsupported platform.")
 endif(NOT UNIX)
@@ -86,11 +92,13 @@ if(NOT RBX_SETTINGS_INITIALIZED)
   set(RBX_SETTINGS_INITIALIZED TRUE CACHE INTERNAL "" FORCE)
 endif(NOT RBX_SETTINGS_INITIALIZED)
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   set(APPLE ON)
-  if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
-    set(APPLE_IOS ON)
-  endif()
+endif()
+
+# Do not infer iOS from the CPU architecture: Apple Silicon macOS is arm64 too.
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS" OR IOS)
+  set(APPLE_IOS ON)
 endif()
 
 include_project_files(SystemHeaders "${CMAKE_SYSROOT}/usr/include/*.h;${RBX_STL_INCLUDE_DIRS}")
@@ -107,7 +115,9 @@ add_subdirectory(Log)
 add_subdirectory(Rendering)
 add_subdirectory(Network)
 add_subdirectory(App)
-add_subdirectory(Android)
+if(ANDROID)
+  add_subdirectory(Android)
+endif()
 add_subdirectory(App.BulletPhysics)
 
 # Configure platform's external dependencies.
@@ -127,6 +137,8 @@ if(UNIX)
     set(DEPENDENCIES "${DEPENDENCIES} -lGLESv2")
     set(DEPENDENCIES "${DEPENDENCIES} -lEGL")
     set(DEPENDENCIES "${DEPENDENCIES} -llog")
+  elseif(APPLE_IOS)
+    # iOS provides OpenGL ES through system frameworks, not a GLESv2 linker library.
   else()
     set(DEPENDENCIES "${DEPENDENCIES} -lGLESv2")
   endif(ANDROID)
@@ -152,15 +164,25 @@ add_library(roblox SHARED
   $<TARGET_OBJECTS:GfxBase>
   $<TARGET_OBJECTS:GfxCore>
   $<TARGET_OBJECTS:GfxRender>
-  $<TARGET_OBJECTS:Android>
   $<TARGET_OBJECTS:App.BulletPhysics>)
+
+if(ANDROID)
+  target_sources(roblox PRIVATE $<TARGET_OBJECTS:Android>)
+endif()
 set_target_properties(roblox PROPERTIES LINKER_LANGUAGE CXX)
 
 # Setup linker flag.
-if(UNIX)
+if(UNIX AND NOT APPLE)
   set(RBX_LINKER_DEPENDENCY_FLAGS "-Wl,--no-whole-archive,--no-gc-sections")
-endif(UNIX)
+endif(UNIX AND NOT APPLE)
 
 string(STRIP "${DEPENDENCIES}" deps_strip_str)
 target_link_libraries(roblox
   ${RBX_LINKER_DEPENDENCY_FLAGS} ${deps_strip_str})
+
+if(APPLE_IOS)
+  target_link_libraries(roblox
+    "-framework OpenGLES"
+    "-framework QuartzCore"
+    "-framework UIKit")
+endif()
