@@ -143,6 +143,8 @@ if(UNIX)
     set(DEPENDENCIES "${DEPENDENCIES} -llog")
   elseif(APPLE_IOS)
     # iOS provides OpenGL ES through system frameworks, not a GLESv2 linker library.
+  elseif(APPLE)
+    # macOS provides desktop OpenGL through OpenGL.framework.
   else()
     set(DEPENDENCIES "${DEPENDENCIES} -lGLESv2")
   endif(ANDROID)
@@ -191,4 +193,8 @@ if(APPLE_IOS)
     "-framework OpenGLES"
     "-framework QuartzCore"
     "-framework UIKit")
+elseif(APPLE)
+  target_link_libraries(roblox
+    "-framework OpenGL"
+    "-framework AppKit")
 endif()
