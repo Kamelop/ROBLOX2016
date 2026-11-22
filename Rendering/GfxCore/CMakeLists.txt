@@ -16,7 +16,7 @@ elseif(APPLE_IOS)
   list(APPEND HEADERS GL/StudioGLView.h)
   set_source_files_properties(GL/ContextGLiOS.mm GL/StudioGLView.mm PROPERTIES COMPILE_FLAGS "-fno-objc-arc")
 elseif(APPLE)
-  list(APPEND SOURCES GL/ContextGLNSGL.mm)
+  list(APPEND SOURCES GL/ContextGLMac.mm)
 endif(ANDROID)
 
 list(APPEND HEADERS GL/ContextGL.h)
