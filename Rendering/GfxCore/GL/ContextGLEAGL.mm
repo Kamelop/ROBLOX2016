@@ -236,8 +236,9 @@ public:
     virtual std::pair<unsigned int, unsigned int> updateMainFramebuffer(unsigned int width, unsigned int height)
     {
         setCurrent();
-        if (width != surfaceWidth || height != surfaceHeight || surfaceWidth == 0 || surfaceHeight == 0)
-            rebuildDrawable();
+        // Refresh drawable storage when the host view has been resized or relaid out.
+        if (!rebuildDrawable())
+            return std::make_pair(0u, 0u);
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
         return std::make_pair((unsigned int)surfaceWidth, (unsigned int)surfaceHeight);
     }
