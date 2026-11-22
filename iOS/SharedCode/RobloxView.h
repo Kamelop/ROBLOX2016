@@ -48,7 +48,7 @@ class RobloxView
 	void onPlaceIDChanged(const RBX::Reflection::PropertyDescriptor* desc);
 public:
 
-    RobloxView(void* wnd, unsigned int width, unsigned int height);
+    RobloxView(void* wnd, unsigned int width, unsigned int height, bool buildInGameGui = true);
 	~RobloxView(void);
 
     // request rendering stop as the app goes to background
@@ -59,7 +59,7 @@ public:
 	
 	void setBounds(unsigned int width, unsigned int height);
 
-    static RobloxView *create_view(shared_ptr<RBX::Game> game, void* wnd, unsigned int width, unsigned int height);
+    static RobloxView *create_view(shared_ptr<RBX::Game> game, void* wnd, unsigned int width, unsigned int height, bool buildInGameGui = true);
 	
     boost::shared_ptr<RBX::DataModel> getDataModel() { return game->getDataModel(); }
     boost::shared_ptr<RBX::Game> getGame() { return game; }
@@ -68,10 +68,11 @@ public:
 private:
 	unsigned int width;
 	unsigned int height;
+    bool buildInGameGui;
     
 	void defineConcurrencyRules();
     
     
-    static void bindWorkspace(boost::shared_ptr<RBX::ViewBase> view, boost::shared_ptr<RBX::DataModel> const dataModel);
+    static void bindWorkspace(boost::shared_ptr<RBX::ViewBase> view, boost::shared_ptr<RBX::DataModel> const dataModel, bool buildInGameGui);
     void completeViewPrep(shared_ptr<RBX::Game> game);
 };
