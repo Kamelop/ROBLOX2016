@@ -1,4 +1,4 @@
-name: iOS Build
+name: iOS Studio Build
 
 on:
   push:
@@ -13,14 +13,14 @@ permissions:
   contents: read
 
 concurrency:
-  group: ios-build-${{ github.ref }}
+  group: ios-studio-build-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-ios:
-    name: Build Roblox iOS target
-    runs-on: macos-15
-    timeout-minutes: 90
+  build-studio:
+    name: Build Roblox Studio for iOS Simulator
+    runs-on: xcode-27
+    timeout-minutes: 120
 
     steps:
       - name: Check out source
@@ -28,31 +28,34 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Select Xcode
+      - name: Verify Xcode toolchain
         run: |
-          sudo xcode-select -s /Applications/Xcode_16.2.app/Contents/Developer
           xcodebuild -version
+          xcodebuild -showsdks
 
-      - name: List available Xcode schemes
+      - name: List project schemes
         run: xcodebuild -list -project iOS/RobloxMobile.xcodeproj
 
-      - name: Build iOS Simulator target
+      - name: Build Studio scheme
         run: |
           set -o pipefail
           xcodebuild \
             -project iOS/RobloxMobile.xcodeproj \
-            -scheme Roblox \
+            -scheme "App Studio" \
             -sdk iphonesimulator \
             -destination 'generic/platform=iOS Simulator' \
             -configuration Debug \
+            -derivedDataPath build/DerivedData \
             CODE_SIGNING_ALLOWED=NO \
-            build 2>&1 | tee ios-build.log
+            build 2>&1 | tee build/ios-studio-build.log
 
-      - name: Upload build log
+      - name: Upload simulator app and build log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ios-build-log
-          path: ios-build.log
-          if-no-files-found: ignore
+          name: roblox-studio-ios-simulator
+          path: |
+            build/DerivedData/Build/Products/Debug-iphonesimulator/*.app
+            build/ios-studio-build.log
+          if-no-files-found: warn
           retention-days: 14
