@@ -146,7 +146,7 @@ public:
         
         // Enable Retina if available
         if (isMainFramebufferRetina())
-            view.contentScaleFactor = 2.0;
+            view.contentScaleFactor = [[UIScreen mainScreen] scale];
         
         // Perform basic layer configuration
         [layer setOpaque:YES];
@@ -233,6 +233,33 @@ public:
 
     virtual std::pair<unsigned int, unsigned int> updateMainFramebuffer(unsigned int width, unsigned int height)
     {
+        setCurrent();
+
+        // UIKit can resize the backing layer after rotation or when the Studio
+        // workspace changes size. Recreate the drawable storage to match it.
+        unsigned int expectedWidth = (unsigned int)(view.bounds.size.width * view.contentScaleFactor + 0.5f);
+        unsigned int expectedHeight = (unsigned int)(view.bounds.size.height * view.contentScaleFactor + 0.5f);
+
+        if (expectedWidth > 0 && expectedHeight > 0 &&
+            (expectedWidth != (unsigned int)renderbufferWidth || expectedHeight != (unsigned int)renderbufferHeight))
+        {
+            glBindRenderbuffer(GL_RENDERBUFFER, colorRenderbufferId);
+
+            if (![context renderbufferStorage:GL_RENDERBUFFER fromDrawable:layer])
+                throw RBX::runtime_error("Unable to resize the iOS color renderbuffer");
+
+            glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &renderbufferWidth);
+            glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &renderbufferHeight);
+
+            glBindRenderbuffer(GL_RENDERBUFFER, depthRenderbufferId);
+            glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8_OES, renderbufferWidth, renderbufferHeight);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, framebufferId);
+            GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+            if (status != GL_FRAMEBUFFER_COMPLETE)
+                throw RBX::runtime_error("Unable to resize the iOS framebuffer: error %x", status);
+        }
+
         return std::make_pair(renderbufferWidth, renderbufferHeight);
     }
 
